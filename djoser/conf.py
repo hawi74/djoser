@@ -95,6 +95,16 @@ default_settings = {
             "token_destroy": ["rest_framework.permissions.IsAuthenticated"],
         }
     ),
+    "WEBAUTHN": {
+        # 'RP_NAME': 'localhost',
+        # 'RP_ID': 'localhost',
+        # 'ORIGIN': 'http://localhost:8000',
+        "RP_NAME": "9ae4bb90.ngrok.io",
+        "RP_ID": "9ae4bb90.ngrok.io",
+        "ORIGIN": "https://9ae4bb90.ngrok.io",
+        "CHALLENGE_LENGTH": 32,
+        "UKEY_LENGTH": 20,
+    },
 }
 
 SETTINGS_TO_IMPORT = ["TOKEN_MODEL", "SOCIAL_AUTH_TOKEN_STRATEGY"]

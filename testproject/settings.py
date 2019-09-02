@@ -31,6 +31,7 @@ INSTALLED_APPS = (
     "djoser",
     "social_django",
     "testapp",
+    "djoser.webauthn",
 )
 
 STATIC_URL = "/static/"
@@ -74,3 +75,5 @@ DJOSER = {
 }
 
 JWT_AUTH = {"JWT_ALLOW_REFRESH": True}
+STATIC_ROOT = "static"
+ALLOWED_HOSTS = ["*"]
