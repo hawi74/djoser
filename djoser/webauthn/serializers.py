@@ -25,6 +25,13 @@ class WebauthnSignupSerializer(serializers.ModelSerializer):
         )
         return super().create(validated_data)
 
+    def validate_username(self, username):
+        if User.objects.filter(username=username).exists():
+            raise serializers.ValidationError(
+                "User {} already exists.".format(username)
+            )
+        return username
+
 
 class WebauthnCredentailSerializer(serializers.ModelSerializer):
     class Meta:
@@ -36,3 +43,14 @@ class WebauthnCredentailSerializer(serializers.ModelSerializer):
 
 class WebauthnLoginSerializer(serializers.Serializer):
     username = serializers.CharField()
+
+    def validate_username(self, username):
+        if not User.objects.filter(
+            username=username, credential_options__isnull=False
+        ).exists():
+            raise serializers.ValidationError(
+                "User {} does not exist or has not been registered via webauthn.".format(
+                    username
+                )
+            )
+        return username

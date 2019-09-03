@@ -14,19 +14,17 @@ from webauthn import (
 from djoser.conf import settings
 
 from .models import CredentialOptions
+from .serializers import (
+    WebauthnCredentailSerializer,
+    WebauthnLoginSerializer,
+    WebauthnSignupSerializer,
+)
 from .utils import create_challenge
-
-# from .serializers import (
-#     WebauthnCredentailSerializer,
-#     WebauthnLoginSerializer,
-#     WebauthnSignupSerializer,
-# )
 
 User = get_user_model()
 
 
 # SignupOptionsView?
-# TODO: validate username uniqueness against User (not only CredentialOptions)
 class SingupRequestView(APIView):
     permission_classes = (AllowAny,)
 
@@ -56,7 +54,12 @@ class SignupVerifyView(APIView):
         serializer = WebauthnCredentailSerializer(data=request.data)
         serializer.is_valid(raise_exception=True)
 
-        co = CredentialOptions.objects.get(ukey=serializer.validated_data["ukey"])
+        try:
+            co = CredentialOptions.objects.get(ukey=serializer.validated_data["ukey"])
+        except CredentialOptions.DoesNotExist:
+            return Response(
+                {"error": "Invalid ukey."}, status=status.HTTP_400_BAD_REQUEST
+            )
 
         webauthn_registration_response = WebAuthnRegistrationResponse(
             rp_id=settings.WEBAUTHN["RP_ID"],
@@ -97,27 +100,16 @@ class LoginRequestView(APIView):
     def post(self, request):
         serializer = WebauthnLoginSerializer(data=request.data)
         serializer.is_valid(raise_exception=True)
-        username = serializer.validated_data["username"]
+        co = CredentialOptions.objects.get(
+            username=serializer.validated_data["username"]
+        )
 
-        try:
-            user = User.objects.get(username=username, credential_options__isnull=False)
-        except User.DoesNotExist:
-            return Response(
-                {
-                    "error": "User {} does not exist or has not been registered via webauthn.".format(
-                        username
-                    )
-                },
-                status=status.HTTP_400_BAD_REQUEST,
-            )
-
-        co = user.credential_options
         co.challenge = create_challenge(32)
         co.save()
 
         webauthn_user = WebAuthnUser(
             user_id=co.ukey,
-            username=user.username,
+            username=co.username,
             display_name=co.display_name,
             icon_url="",
             credential_id=co.credential_id,
@@ -178,4 +170,4 @@ class LoginView(APIView):
         co.sign_count = sign_count
         co.save()
 
-        return Response({"token": "TOKEN_GOES_HERE"})
+        return Response({"auth_token": "TOKEN_GOES_HERE"})
