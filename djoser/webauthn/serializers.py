@@ -33,11 +33,7 @@ class WebauthnSignupSerializer(serializers.ModelSerializer):
         return username
 
 
-class WebauthnCredentailSerializer(serializers.ModelSerializer):
-    class Meta:
-        model = CredentialOptions
-        fields = ("ukey",)
-
+class WebauthnCredentailSerializer(serializers.Serializer):
     ukey = serializers.CharField()
 
 

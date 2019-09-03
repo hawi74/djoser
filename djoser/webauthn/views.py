@@ -82,14 +82,12 @@ class SignupVerifyView(APIView):
                 status=status.HTTP_400_BAD_REQUEST,
             )
 
-        user = User.objects.create(username=co.username)
-
-        serializer.save(
-            user=user,
-            sign_count=webauthn_credential.sign_count,
-            credential_id=webauthn_credential.credential_id.decode(),
-            public_key=webauthn_credential.public_key.decode(),
-        )
+        co.challenge = ""
+        co.user = User.objects.create(username=co.username)
+        co.sign_count = webauthn_credential.sign_count
+        co.credential_id = webauthn_credential.credential_id.decode()
+        co.public_key = webauthn_credential.public_key.decode()
+        co.save()
 
         return Response({"success": True})
 
@@ -168,6 +166,7 @@ class LoginView(APIView):
             )
 
         co.sign_count = sign_count
+        co.challenge = ""
         co.save()
 
         return Response({"auth_token": "TOKEN_GOES_HERE"})

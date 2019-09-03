@@ -41,7 +41,7 @@ class TestSignupView(
     url = reverse("webauthn:verify_credential_info")
 
     def setUp(self):
-        create_credential_options(
+        self.co = create_credential_options(
             challenge=REGISTRATION_CHALLENGE,
             username=USERNAME,
             display_name=USER_DISPLAY_NAME,
@@ -64,3 +64,10 @@ class TestSignupView(
 
         self.assert_status_equal(response, status.HTTP_200_OK)
         self.assert_instance_exists(User, username=USERNAME)
+
+    def test_challenge_should_not_be_stored_after_successfull_signup(self):
+        data = deepcopy(SIGNUP_DATA)
+        self.client.post(self.url, data=data)
+
+        self.co.refresh_from_db()
+        self.assertEqual(self.co.challenge, "")

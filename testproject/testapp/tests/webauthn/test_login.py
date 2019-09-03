@@ -27,6 +27,7 @@ LOGIN_DATA = {
     "signature": "65d05b43495d4babc0388e6d530d7b0d676b0c29ddab4dce2445ebd053cc77ce43acc6d820c0d8491a0bae7beb98de8751d7497e07e061b7d26f4e490cd64b8bcd0628e1f50848d12b43f17493c9baf02bd4250a92c5d095d85faf7152a5132cd5f27c8223e61e683885021678a5156a955970d574926c52eec63b3bd25a205c4b51cb15c34c92ddd25b0ad370de96423e4b3edf5876963392f2ac889953f166669b96d16f894ef88e347484ab3cc81bc2814fbaf4b13dd1d483038bc4fb1354d564bc5aa944139ce6408e9078eddb6abef3a8ef4a77bcf74296ffd14c66223131d905f81cd149e1b8979c1bd87a036fca68f166e0644539b180d44f82fd7ed7",  # noqa
     "username": USERNAME,
 }
+PUBLIC_KEY = "pAEDAzkBACBZAQDKjp4zmIBGEe97svBO9uHFPf2oe-IeMLW3Nq5jkEWeoCpiyPqbkeXo13IZAQMj40uub2QYqXEYugNRkuhCVRUvRbaiW2ws9i2AoukCgR_pB9DHnWPzo1mJEKU0RFUqxD4K1x5CX-JzvO8rsdMxBAz_Ja1piMaj23YgM9WCuRWehLO7P8373KUKCMKbbf6yWVvpeGC-lePjhMOmJkU6EkOFhCSy6pOMDWzTx5es8PC9zUFyrk3yUkhzd69rTu95y5kHnfLBjShlFZnnxpXTfmOOM934rGnkkaLcfTcSu-cckJXG_rh36eDHta-erCwS8ZUbedq5p14bNha4aSCzF115IUMBAAE"  # noqa
 
 
 @override_settings(
@@ -43,14 +44,14 @@ class TestLoginView(
     url = reverse("webauthn:login")
 
     def setUp(self):
-        co = create_credential_options(
+        self.co = co = create_credential_options(
             challenge=ASSERTION_CHALLENGE,
             username=USERNAME,
             display_name=USER_DISPLAY_NAME,
             ukey=USER_ID,
             with_user=True,
         )
-        co.public_key = "pAEDAzkBACBZAQDKjp4zmIBGEe97svBO9uHFPf2oe-IeMLW3Nq5jkEWeoCpiyPqbkeXo13IZAQMj40uub2QYqXEYugNRkuhCVRUvRbaiW2ws9i2AoukCgR_pB9DHnWPzo1mJEKU0RFUqxD4K1x5CX-JzvO8rsdMxBAz_Ja1piMaj23YgM9WCuRWehLO7P8373KUKCMKbbf6yWVvpeGC-lePjhMOmJkU6EkOFhCSy6pOMDWzTx5es8PC9zUFyrk3yUkhzd69rTu95y5kHnfLBjShlFZnnxpXTfmOOM934rGnkkaLcfTcSu-cckJXG_rh36eDHta-erCwS8ZUbedq5p14bNha4aSCzF115IUMBAAE"  # noqa
+        co.public_key = PUBLIC_KEY
         co.sign_count = 0
         co.save()
 
@@ -69,3 +70,10 @@ class TestLoginView(
 
         self.assert_status_equal(response, status.HTTP_200_OK)
         self.assertTrue("auth_token" in response.json())
+
+    def test_challenge_should_not_be_stored_after_successful_login(self):
+        data = deepcopy(LOGIN_DATA)
+        self.client.post(self.url, data=data)
+
+        self.co.refresh_from_db()
+        self.assertEqual(self.co.challenge, "")
