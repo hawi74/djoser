@@ -12,6 +12,7 @@ from webauthn import (
 )
 
 from djoser.conf import settings
+from djoser.utils import login_user
 
 from .models import CredentialOptions
 from .serializers import (
@@ -169,4 +170,6 @@ class LoginView(APIView):
         co.challenge = ""
         co.save()
 
-        return Response({"auth_token": "TOKEN_GOES_HERE"})
+        token_serializer_class = settings.SERIALIZERS.token
+        token = login_user(request, user)
+        return Response(token_serializer_class(token).data)
