@@ -8,6 +8,8 @@ from rest_framework import status
 from rest_framework.reverse import reverse
 from rest_framework.test import APITestCase
 
+from djoser.conf import settings as djoser_settings
+
 from .utils import create_credential_options
 
 User = get_user_model()
@@ -64,11 +66,12 @@ class TestLoginView(
 
                 self.assert_status_equal(response, status.HTTP_400_BAD_REQUEST)
 
-    def test_post_with_valid_login_response_should_return_auth_token(self):
+    def test_post_with_valid_login_response_should_create_and_return_auth_token(self):
         data = deepcopy(LOGIN_DATA)
         response = self.client.post(self.url, data=data)
 
         self.assert_status_equal(response, status.HTTP_200_OK)
+        self.assert_instance_exists(djoser_settings.TOKEN_MODEL)
         self.assertTrue("auth_token" in response.json())
 
     def test_challenge_should_not_be_stored_after_successful_login(self):
