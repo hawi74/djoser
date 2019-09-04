@@ -247,7 +247,7 @@ const postNewAssertionToServer = async (credentialDataForServer) => {
     });
     
     return await fetch_json(
-        "/verify_credential_info", {
+        "/signup", {
         method: "POST",
         body: formData
     });
@@ -329,7 +329,7 @@ async function post(path, data) {
 let userKey;
 
 async function getCredentialOptions(username, displayName) {
-    const rawCredentialOptions = await post('/webauthn/get_credential_options/', {
+    const rawCredentialOptions = await post('/webauthn/signup_request/', {
         username: username,
         display_name: displayName,
     });
@@ -340,7 +340,7 @@ async function getCredentialOptions(username, displayName) {
 async function confirmAssertionForServer(assertionForServer) {
     let data = assertionForServer;
     data.ukey = userKey;
-    return await post('/webauthn/verify_credential_info/', data);
+    return await post('/webauthn/signup/', data);
 }
 
 async function handleSignup(e) {
@@ -364,7 +364,7 @@ async function handleSignup(e) {
 
 /* webauthn login */
 async function getAssertionOptions(username) {
-    const rawAssertionOptions = await post('/webauthn/begin_login/', {
+    const rawAssertionOptions = await post('/webauthn/login_request/', {
         username: username,
     });
     return transformCredentialRequestOptions(rawAssertionOptions);

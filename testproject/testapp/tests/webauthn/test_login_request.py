@@ -17,7 +17,7 @@ User = get_user_model()
 
 
 class TestLoginRequestView(APITestCase, assertions.StatusCodeAssertionsMixin):
-    url = reverse("webauthn:begin_login")
+    url = reverse("webauthn:login_request")
 
     def test_post_with_non_existing_username_should_return_400(self):
         data = {"username": "john"}

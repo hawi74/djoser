@@ -81,6 +81,7 @@ class SignupView(APIView):
             to = [get_user_email(user)]
             settings.EMAIL.activation(self.request, context).send(to)
 
+        # TODO: send signup signal
         return Response(user_serializer.data)
 
 

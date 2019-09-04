@@ -12,7 +12,7 @@ class SignupRequestViewTest(
     assertions.StatusCodeAssertionsMixin,
     assertions.InstanceAssertionsMixin,
 ):
-    url = reverse("webauthn:get_credential_options")
+    url = reverse("webauthn:signup_request")
 
     def test_post_with_duplicate_username_should_fail(self):
         user = create_user()

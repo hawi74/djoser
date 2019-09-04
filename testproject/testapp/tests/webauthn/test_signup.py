@@ -40,7 +40,7 @@ class TestSignupView(
     assertions.InstanceAssertionsMixin,
     assertions.EmailAssertionsMixin,
 ):
-    url = reverse("webauthn:verify_credential_info", args=[USER_ID])
+    url = reverse("webauthn:signup", args=[USER_ID])
 
     def setUp(self):
         self.co = create_credential_options(
