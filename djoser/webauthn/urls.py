@@ -11,8 +11,8 @@ urlpatterns = [
         name="get_credential_options",
     ),
     path(
-        "verify_credential_info/",
-        views.SignupVerifyView.as_view(),
+        "verify_credential_info/<ukey>/",
+        views.SignupView.as_view(),
         name="verify_credential_info",
     ),
     path("begin_login/", views.LoginRequestView.as_view(), name="begin_login"),

@@ -1,4 +1,5 @@
 from django.contrib.auth import get_user_model
+from django.shortcuts import get_object_or_404
 from rest_framework import status
 from rest_framework.permissions import AllowAny
 from rest_framework.response import Response
@@ -11,21 +12,17 @@ from webauthn import (
     WebAuthnUser,
 )
 
+from djoser.compat import get_user_email
 from djoser.conf import settings
 from djoser.utils import login_user
 
 from .models import CredentialOptions
-from .serializers import (
-    WebauthnCredentailSerializer,
-    WebauthnLoginSerializer,
-    WebauthnSignupSerializer,
-)
+from .serializers import WebauthnLoginSerializer, WebauthnSignupSerializer
 from .utils import create_challenge
 
 User = get_user_model()
 
 
-# SignupOptionsView?
 class SingupRequestView(APIView):
     permission_classes = (AllowAny,)
 
@@ -47,20 +44,14 @@ class SingupRequestView(APIView):
         return Response(credential_registration_dict.registration_dict)
 
 
-# SignupView?
-class SignupVerifyView(APIView):
+class SignupView(APIView):
     permission_classes = (AllowAny,)
+    serializer_class = settings.WEBAUTHN.SIGNUP_SERIALIZER
 
-    def post(self, request):
-        serializer = WebauthnCredentailSerializer(data=request.data)
-        serializer.is_valid(raise_exception=True)
-
-        try:
-            co = CredentialOptions.objects.get(ukey=serializer.validated_data["ukey"])
-        except CredentialOptions.DoesNotExist:
-            return Response(
-                {"error": "Invalid ukey."}, status=status.HTTP_400_BAD_REQUEST
-            )
+    def post(self, request, ukey):
+        co = get_object_or_404(CredentialOptions, ukey=ukey)
+        user_serializer = self.serializer_class(data=request.data)
+        user_serializer.is_valid(raise_exception=True)
 
         webauthn_registration_response = WebAuthnRegistrationResponse(
             rp_id=settings.WEBAUTHN["RP_ID"],
@@ -77,20 +68,20 @@ class SignupVerifyView(APIView):
                 status=status.HTTP_400_BAD_REQUEST,
             )
 
-        if User.objects.filter(username=co.username).exists():
-            return Response(
-                {"error": "User {} already exists.".format(co.username)},
-                status=status.HTTP_400_BAD_REQUEST,
-            )
-
+        user = user_serializer.save()
         co.challenge = ""
-        co.user = User.objects.create(username=co.username)
+        co.user = user
         co.sign_count = webauthn_credential.sign_count
         co.credential_id = webauthn_credential.credential_id.decode()
         co.public_key = webauthn_credential.public_key.decode()
         co.save()
 
-        return Response({"success": True})
+        if settings.SEND_ACTIVATION_EMAIL and not user.is_active:
+            context = {"user": user}
+            to = [get_user_email(user)]
+            settings.EMAIL.activation(self.request, context).send(to)
+
+        return Response(user_serializer.data)
 
 
 class LoginRequestView(APIView):
@@ -126,17 +117,12 @@ class LoginRequestView(APIView):
 # this name looks good :)
 class LoginView(APIView):
     permission_classes = (AllowAny,)
+    serializer_class = settings.WEBAUTHN.LOGIN_SERIALIZER
 
     def post(self, request):
-        serializer = WebauthnLoginSerializer(data=request.data)
+        serializer = self.serializer_class(data=request.data)
         serializer.is_valid(raise_exception=True)
-        username = serializer.validated_data["username"]
-
-        try:
-            user = User.objects.filter(username=username).first()
-        except User.DoesNotExist:
-            return Response({"error": "User {} does not exist.".format(username)})
-
+        user = serializer.user
         co = user.credential_options
 
         webuathn_user = WebAuthnUser(
