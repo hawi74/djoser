@@ -1,14 +1,9 @@
-from copy import deepcopy
-
-from django.conf import settings
 from django.contrib.auth import get_user_model
-from django.test.utils import override_settings
 from djet import assertions
 from rest_framework import status
 from rest_framework.reverse import reverse
 from rest_framework.test import APITestCase
 
-from djoser.webauthn.models import CredentialOptions
 from testapp.tests.common import create_user
 
 from .utils import create_credential_options

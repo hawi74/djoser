@@ -64,7 +64,7 @@ class TestSignupView(
         data = deepcopy(SIGNUP_DATA)
         response = self.client.post(self.url, data=data)
 
-        self.assert_status_equal(response, status.HTTP_200_OK)
+        self.assert_status_equal(response, status.HTTP_201_CREATED)
         self.assert_instance_exists(User, username=USERNAME)
 
     def test_challenge_should_not_be_stored_after_successfull_signup(self):

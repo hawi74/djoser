@@ -3,6 +3,7 @@ from django.shortcuts import get_object_or_404
 from rest_framework import status
 from rest_framework.permissions import AllowAny
 from rest_framework.response import Response
+from rest_framework.settings import api_settings
 from rest_framework.views import APIView
 from webauthn import (
     WebAuthnAssertionOptions,
@@ -62,9 +63,9 @@ class SignupView(APIView):
         )
         try:
             webauthn_credential = webauthn_registration_response.verify()
-        except Exception as e:
+        except:  # TODO: catch only specified exceptions
             return Response(
-                {"error": "Registration failed. Error: {}".format(e)},
+                {api_settings.NON_FIELD_ERRORS_KEY: "WebAuthn verification failed."},
                 status=status.HTTP_400_BAD_REQUEST,
             )
 
@@ -82,7 +83,7 @@ class SignupView(APIView):
             settings.EMAIL.activation(self.request, context).send(to)
 
         # TODO: send signup signal
-        return Response(user_serializer.data)
+        return Response(user_serializer.data, status=status.HTTP_201_CREATED)
 
 
 class LoginRequestView(APIView):
@@ -147,9 +148,9 @@ class LoginView(APIView):
 
         try:
             sign_count = webauthn_assertion_response.verify()
-        except Exception as e:
+        except:  # TODO: catch only specified exceptions
             return Response(
-                {"error": "Assertion failed. Error: {}".format(e)},
+                {api_settings.NON_FIELD_ERRORS_KEY: "WebAuthn verification failed."},
                 status=status.HTTP_400_BAD_REQUEST,
             )
 
@@ -159,4 +160,6 @@ class LoginView(APIView):
 
         token_serializer_class = settings.SERIALIZERS.token
         token = login_user(request, user)
-        return Response(token_serializer_class(token).data)
+        return Response(
+            token_serializer_class(token).data, status=status.HTTP_201_CREATED
+        )

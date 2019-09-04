@@ -70,7 +70,7 @@ class TestLoginView(
         data = deepcopy(LOGIN_DATA)
         response = self.client.post(self.url, data=data)
 
-        self.assert_status_equal(response, status.HTTP_200_OK)
+        self.assert_status_equal(response, status.HTTP_201_CREATED)
         self.assert_instance_exists(djoser_settings.TOKEN_MODEL)
         self.assertTrue("auth_token" in response.json())
 
