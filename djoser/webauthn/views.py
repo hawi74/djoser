@@ -12,6 +12,10 @@ from webauthn import (
     WebAuthnRegistrationResponse,
     WebAuthnUser,
 )
+from webauthn.webauthn import (
+    AuthenticationRejectedException,
+    RegistrationRejectedException,
+)
 
 from djoser import signals
 from djoser.compat import get_user_email
@@ -64,7 +68,7 @@ class SignupView(APIView):
         )
         try:
             webauthn_credential = webauthn_registration_response.verify()
-        except:  # TODO: catch only specified exceptions
+        except RegistrationRejectedException:
             return Response(
                 {api_settings.NON_FIELD_ERRORS_KEY: "WebAuthn verification failed."},
                 status=status.HTTP_400_BAD_REQUEST,
@@ -151,7 +155,7 @@ class LoginView(APIView):
 
         try:
             sign_count = webauthn_assertion_response.verify()
-        except:  # TODO: catch only specified exceptions
+        except AuthenticationRejectedException:
             return Response(
                 {api_settings.NON_FIELD_ERRORS_KEY: "WebAuthn verification failed."},
                 status=status.HTTP_400_BAD_REQUEST,
