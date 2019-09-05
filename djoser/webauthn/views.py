@@ -13,6 +13,7 @@ from webauthn import (
     WebAuthnUser,
 )
 
+from djoser import signals
 from djoser.compat import get_user_email
 from djoser.conf import settings
 from djoser.utils import login_user
@@ -76,13 +77,15 @@ class SignupView(APIView):
         co.credential_id = webauthn_credential.credential_id.decode()
         co.public_key = webauthn_credential.public_key.decode()
         co.save()
+        signals.user_registered.send(
+            sender=self.__class__, user=user, request=self.request
+        )
 
         if settings.SEND_ACTIVATION_EMAIL and not user.is_active:
             context = {"user": user}
             to = [get_user_email(user)]
             settings.EMAIL.activation(self.request, context).send(to)
 
-        # TODO: send signup signal
         return Response(user_serializer.data, status=status.HTTP_201_CREATED)
 
 
